@@ -1,268 +1,352 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Bell, Calendar, User, MessageSquare, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Bell, Calendar, User, MessageSquare, Package, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-type NotificationType = 'appointment' | 'message' | 'user' | 'alert' | 'success';
+type NotificationType = 'appointment' | 'inventory' | 'message' | 'user' | 'alert' | 'success' | 'info';
 
-<<<<<<< HEAD
 interface NotificationData {
-  [key: string]: string | number | boolean | null | undefined;
+  [key: string]: string | number | boolean | null | undefined | Record<string, unknown>;
 }
 
-interface DBNotification {
-  id: string;
-  type: NotificationType;
-  title: string | null;
-  message: string;
-  created_at: string;
-  read: boolean;
-  data?: NotificationData | null;
-  user_id: string;
-}
-
-=======
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
-interface Notification {
+export interface Notification {
   id: string;
   type: NotificationType;
   title: string;
   message: string;
-  createdAt: string;
   read: boolean;
-<<<<<<< HEAD
-  data: NotificationData;
-=======
-  data?: Record<string, any>;
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
+  created_at: string;
+  data?: NotificationData;
+  user_id: string;
 }
 
-export function Notifications() {
+interface NotificationsProps {
+  maxItems?: number;
+  className?: string;
+}
+
+export function Notifications({ maxItems = 10, className = '' }: NotificationsProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    // Fetch initial notifications
-    const fetchNotifications = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from('notifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (error) throw error;
-
-        setNotifications(
-<<<<<<< HEAD
-          (data as DBNotification[]).map((n) => ({
-=======
-          data.map((n: any) => ({
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
-            id: n.id,
-            type: n.type,
-            title: n.title || getDefaultTitle(n.type),
-            message: n.message,
-            createdAt: n.created_at,
-            read: n.read,
-            data: n.data || {},
-          }))
-        );
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNotifications();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: 'user_id=eq.' + supabase.auth.getUser()?.then(u => u.data.user?.id) 
-        },
-        (payload) => {
-<<<<<<< HEAD
-          const newNotification: Notification = {
-=======
-          const newNotification = {
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
-            id: payload.new.id,
-            type: payload.new.type as NotificationType,
-            title: payload.new.title || getDefaultTitle(payload.new.type),
-            message: payload.new.message,
-            createdAt: payload.new.created_at,
-            read: false,
-<<<<<<< HEAD
-            data: (payload.new.data as NotificationData) || {},
-=======
-            data: payload.new.data || {},
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
-          };
-          
-          setNotifications(prev => [newNotification, ...prev.slice(0, 4)]);
-          
-          // Show browser notification if the tab is not focused
-          if (document.visibilityState !== 'visible') {
-            new Notification(newNotification.title, {
-              body: newNotification.message,
-              icon: '/logo.png',
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    // Request notification permission
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        Notification.requestPermission();
-      }
-    }
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase]);
-
+  // Helper function to get the appropriate icon for each notification type
   const getNotificationIcon = (type: NotificationType) => {
-    const iconClass = 'h-5 w-5 flex-shrink-0';
+    const iconProps = { className: 'h-5 w-5' };
     
     switch (type) {
       case 'appointment':
-        return <Calendar className={`${iconClass} text-blue-500`} />;
+        return <Calendar {...iconProps} className={cn(iconProps.className, 'text-blue-500')} />;
+      case 'inventory':
+        return <Package {...iconProps} className={cn(iconProps.className, 'text-amber-500')} />;
       case 'message':
-        return <MessageSquare className={`${iconClass} text-emerald-500`} />;
+        return <MessageSquare {...iconProps} className={cn(iconProps.className, 'text-green-500')} />;
       case 'user':
-        return <User className={`${iconClass} text-purple-500`} />;
+        return <User {...iconProps} className={cn(iconProps.className, 'text-purple-500')} />;
       case 'alert':
-        return <AlertCircle className={`${iconClass} text-amber-500`} />;
+        return <AlertCircle {...iconProps} className={cn(iconProps.className, 'text-red-500')} />;
       case 'success':
-        return <CheckCircle className={`${iconClass} text-green-500`} />;
+        return <CheckCircle {...iconProps} className={cn(iconProps.className, 'text-green-500')} />;
       default:
-        return <Bell className={`${iconClass} text-gray-500`} />;
+        return <Bell {...iconProps} className={cn(iconProps.className, 'text-gray-500')} />;
     }
   };
 
-  const getDefaultTitle = (type: string): string => {
-    switch (type) {
-      case 'appointment': return 'New Appointment';
-      case 'message': return 'New Message';
-      case 'user': return 'User Update';
-      case 'alert': return 'Alert';
-      case 'success': return 'Success';
-      default: return 'Notification';
-    }
-  };
-
-  const markAsRead = async (id: string) => {
+  // Check if a table exists in the database
+  const checkTableExists = useCallback(async (tableName: string): Promise<boolean> => {
     try {
       const { error } = await supabase
+        .from(tableName)
+        .select('*')
+        .limit(1);
+      
+      // If we get an error, the table might not exist or we don't have permissions
+      return !error;
+    } catch (error) {
+      console.error(`Error checking if table ${tableName} exists:`, error);
+      return false;
+    }
+  }, [supabase]);
+
+  // Fetch notifications from the server
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Check if notifications table exists
+      const notificationsTableExists = await checkTableExists('notifications');
+      
+      if (!notificationsTableExists) {
+        console.warn('Notifications table does not exist');
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
+
+      const { data, error } = await supabase
         .from('notifications')
-        .update({ read: true })
-        .eq('id', id);
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(maxItems);
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => (n.id === id ? { ...n, read: true } : n))
-      );
+      setNotifications(data || []);
+      setUnreadCount(data?.filter(n => !n.read).length || 0);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error fetching notifications:', error);
+      // Don't show error toast for missing tables to avoid spamming the user
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('relation "notifications" does not exist')) {
+        toast.error('Failed to load notifications');
+      }
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [maxItems, supabase, checkTableExists]);
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      setIsMarkingAllRead(true);
+      
+      // Check if notifications table exists
+      const notificationsTableExists = await checkTableExists('notifications');
+      if (!notificationsTableExists) {
+        toast.info('No notifications to mark as read');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('read', false);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+      toast.success('All notifications marked as read');
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      // Don't show error toast for missing tables to avoid spamming the user
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('relation "notifications" does not exist')) {
+        toast.error('Failed to mark notifications as read');
+      }
+    } finally {
+      setIsMarkingAllRead(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-12 bg-gray-100 rounded"></div>
-          </div>
-        ))}
-      </div>
-    );
-  }
+  // Clear all notifications
+  const clearAll = async () => {
+    try {
+      setIsClearing(true);
+      
+      // Check if notifications table exists
+      const notificationsTableExists = await checkTableExists('notifications');
+      if (!notificationsTableExists) {
+        toast.info('No notifications to clear');
+        return;
+      }
 
-  if (notifications.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Bell className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
-        <p className="mt-1 text-sm text-gray-500">
-<<<<<<< HEAD
-          You&apos;ll see notifications here when you have them.
-=======
-          You'll see notifications here when you have them.
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
-        </p>
-      </div>
-    );
-  }
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .not('id', 'is', null);
+
+      if (error) throw error;
+
+      setNotifications([]);
+      setUnreadCount(0);
+      toast.success('All notifications cleared');
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      // Don't show error toast for missing tables to avoid spamming the user
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('relation "notifications" does not exist')) {
+        toast.error('Failed to clear notifications');
+      }
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.read) {
+      try {
+        // Check if notifications table exists
+        const notificationsTableExists = await checkTableExists('notifications');
+        
+        if (notificationsTableExists) {
+          await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notification.id);
+        }
+
+        setNotifications(prev => 
+          prev.map(n => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+        // Silently fail - we still want to handle the click even if marking as read fails
+      }
+    }
+
+    // Handle navigation based on notification type
+    if (notification.type === 'appointment') {
+      // Navigate to appointment
+    } else if (notification.type === 'message') {
+      // Navigate to messages
+    }
+    
+    // Close the dropdown
+    setIsOpen(false);
+  };
+
+  // Format notification time
+  const formatNotificationTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return '';
+    }
+  };
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('realtime notifications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'notifications' },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [fetchNotifications, supabase]);
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   return (
-    <div className="flow-root">
-      <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-        {notifications.map((notification) => (
-          <li 
-            key={notification.id} 
-            className={cn(
-              'relative py-4 px-4 hover:bg-gray-50 cursor-pointer',
-              !notification.read && 'bg-blue-50'
-            )}
-            onClick={() => markAsRead(notification.id)}
-          >
-            <div className="flex items-start">
-              <div className="flex-shrink-0 pt-0.5">
-                {getNotificationIcon(notification.type)}
-              </div>
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
-                  {notification.title}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {notification.message}
-                </p>
-                <div className="mt-1 flex items-center text-xs text-gray-500">
-                  <Clock className="flex-shrink-0 mr-1.5 h-3.5 w-3.5 text-gray-400" />
-                  <span>
-                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                  </span>
-                </div>
-              </div>
-              {!notification.read && (
-                <div className="ml-4 flex-shrink-0">
-                  <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                </div>
-              )}
+    <div className={`relative ${className}`} ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+        aria-label="Notifications"
+      >
+        <Bell className="h-6 w-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-80 origin-top-right overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h3 className="text-lg font-medium text-gray-900">Notifications</h3>
+            <div className="flex space-x-2">
+              <button
+                onClick={markAllAsRead}
+                disabled={isMarkingAllRead || unreadCount === 0}
+                className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={clearAll}
+                disabled={isClearing || notifications.length === 0}
+                className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
+              >
+                {isClearing ? 'Clearing...' : 'Clear all'}
+              </button>
             </div>
-          </li>
-        ))}
-      </ul>
-      <div className="bg-gray-50 px-4 py-3 text-center border-t border-gray-200">
-        <a
-          href="/dashboard/admin/notifications"
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-        >
-          View all notifications
-        </a>
-      </div>
+          </div>
+
+          <ScrollArea className="max-h-96">
+            {isLoading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                No notifications
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    className={cn(
+                      'flex cursor-pointer items-start p-4 hover:bg-gray-50',
+                      !notification.read && 'bg-blue-50'
+                    )}
+                  >
+                    <div className="flex-shrink-0 pt-0.5">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    <div className="ml-3 flex-1 overflow-hidden">
+                      <p className="text-sm font-medium text-gray-900">
+                        {notification.title}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-500">
+                        {notification.message}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {formatNotificationTime(notification.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      )}
     </div>
   );
 }

@@ -77,16 +77,46 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies AppPageConfig<"/auth/update-password">
 }
 
+// Validate ../../src/app/dashboard/admin/appointments/new/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/dashboard/admin/appointments/new/page.js")
+  handler satisfies AppPageConfig<"/dashboard/admin/appointments/new">
+}
+
+// Validate ../../src/app/dashboard/admin/appointments/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/dashboard/admin/appointments/page.js")
+  handler satisfies AppPageConfig<"/dashboard/admin/appointments">
+}
+
 // Validate ../../src/app/dashboard/admin/inventory/page.tsx
 {
   const handler = {} as typeof import("../../src/app/dashboard/admin/inventory/page.js")
   handler satisfies AppPageConfig<"/dashboard/admin/inventory">
 }
 
+// Validate ../../src/app/dashboard/admin/messages/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/dashboard/admin/messages/page.js")
+  handler satisfies AppPageConfig<"/dashboard/admin/messages">
+}
+
 // Validate ../../src/app/dashboard/admin/page.tsx
 {
   const handler = {} as typeof import("../../src/app/dashboard/admin/page.js")
   handler satisfies AppPageConfig<"/dashboard/admin">
+}
+
+// Validate ../../src/app/dashboard/admin/patients/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/dashboard/admin/patients/page.js")
+  handler satisfies AppPageConfig<"/dashboard/admin/patients">
+}
+
+// Validate ../../src/app/dashboard/admin/vaccination-cards/page.tsx
+{
+  const handler = {} as typeof import("../../src/app/dashboard/admin/vaccination-cards/page.js")
+  handler satisfies AppPageConfig<"/dashboard/admin/vaccination-cards">
 }
 
 // Validate ../../src/app/dashboard/book/page.tsx
@@ -137,6 +167,12 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies AppPageConfig<"/">
 }
 
+// Validate ../../src/app/api/appointments/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/appointments/route.js")
+  handler satisfies RouteHandlerConfig<"/api/appointments">
+}
+
 // Validate ../../src/app/api/messages/route.ts
 {
   const handler = {} as typeof import("../../src/app/api/messages/route.js")
@@ -157,12 +193,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   const handler = {} as typeof import("../../src/app/dashboard/layout.js")
   handler satisfies LayoutConfig<"/dashboard">
-}
-
-// Validate ../../src/app/dashboard/user/layout.tsx
-{
-  const handler = {} as typeof import("../../src/app/dashboard/user/layout.js")
-  handler satisfies LayoutConfig<"/dashboard/user">
 }
 
 // Validate ../../src/app/layout.tsx

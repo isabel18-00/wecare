@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, MessageSquare, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Notifications } from './Notifications';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -12,36 +12,29 @@ interface HeaderProps {
 }
 
 export function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
-  // Fetch counts from the database
+  // Fetch message count from the database
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchMessageCount = async () => {
       try {
-        // Fetch unread notifications count
-        const { count: notificationsCount } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('read', false);
-
         // Fetch unread messages count
         const { count: messagesCount } = await supabase
           .from('messages')
           .select('*', { count: 'exact', head: true })
-          .eq('read', false);
+          .eq('read', 'false'); // Use string 'false' for Supabase boolean filter
 
-        setNotificationCount(notificationsCount || 0);
         setMessageCount(messagesCount || 0);
       } catch (error) {
-        console.error('Error fetching counts:', error);
+        console.error('Error fetching message count:', error);
       }
     };
 
-    fetchCounts();
+    fetchMessageCount();
   }, [supabase]);
 
   return (
@@ -71,35 +64,25 @@ export function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
           </div>
 
           {/* Right side */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
+            <Notifications className="ml-4" />
+
             <button
               type="button"
-              className="p-2 rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 relative"
-              onClick={() => router.push('/dashboard/admin/notifications')}
+              className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 relative"
+              onClick={() => router.push('/dashboard/messages')}
             >
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {notificationCount}
-                </span>
-              )}
-            </button>
-            
-            <button
-              type="button"
-              className="p-2 rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 relative"
-              onClick={() => router.push('/dashboard/admin/messages')}
-            >
-              <MessageSquare className="h-5 w-5" />
+              <MessageSquare className="h-6 w-6" />
               {messageCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {messageCount}
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {messageCount > 9 ? '9+' : messageCount}
                 </span>
               )}
             </button>
 
             <div className="ml-3 relative">
-              <div className="flex items-center">
+              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
+                A
                 <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
                   A
                 </div>

@@ -1,0 +1,484 @@
+'use client';
+
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Bell, Calendar, User, MessageSquare, Package, AlertCircle, CheckCircle, X, Loader2, Check, Trash2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+type NotificationType = 'appointment' | 'inventory' | 'message' | 'user' | 'alert' | 'success';
+
+interface NotificationData {
+  [key: string]: string | number | boolean | null | undefined | Record<string, any>;
+}
+
+interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
+  data?: NotificationData;
+}
+
+interface NotificationsProps {
+  maxItems?: number;
+  showMarkAllAsRead?: boolean;
+  showClearAll?: boolean;
+}
+
+export function Notifications({ 
+  maxItems = 5, 
+  showMarkAllAsRead = true, 
+  showClearAll = true 
+}: NotificationsProps) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isMarkingRead, setIsMarkingRead] = useState<string | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
+  
+  const supabase = createClient();
+  const channelRef = useRef<any>(null);
+  const maxItemsLimit = Math.min(maxItems, 50); // Maximum of 50 items
+
+  // Fetch notifications from the server
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(maxItemsLimit);
+
+      if (error) throw error;
+
+      const formattedNotifications = (data || []).map(notification => ({
+        id: notification.id,
+        type: notification.type as NotificationType,
+        title: notification.title,
+        message: notification.message,
+        createdAt: notification.created_at,
+        read: notification.read,
+        data: notification.data
+      }));
+
+      setNotifications(formattedNotifications);
+      setUnreadCount(formattedNotifications.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast.error('Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [maxItemsLimit, supabase]);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    let mounted = true;
+
+    const setupChannel = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !mounted) return;
+
+      // Set up real-time subscription
+      channelRef.current = supabase
+        .channel('notifications_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload: any) => {
+            if (!mounted) return;
+            
+            const newNotification: Notification = {
+              id: payload.new.id,
+              type: payload.new.type as NotificationType,
+              title: payload.new.title,
+              message: payload.new.message,
+              createdAt: payload.new.created_at,
+              read: payload.new.read,
+              data: payload.new.data
+            };
+            
+            setNotifications(prev => {
+              const updated = [newNotification, ...prev];
+              if (updated.length > maxItemsLimit) {
+                updated.pop();
+              }
+              return updated;
+            });
+            
+            setUnreadCount(prev => prev + 1);
+            
+            // Show browser notification if app is not focused
+            if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
+              try {
+                new Notification(newNotification.title, {
+                  body: newNotification.message,
+                  icon: '/icon-192x192.png',
+                  tag: `notification-${newNotification.id}`
+                });
+              } catch (error) {
+                console.error('Error showing notification:', error);
+              }
+            } else if (Notification.permission === 'default') {
+              Notification.requestPermission().catch(console.error);
+            }
+          }
+        )
+        .subscribe(
+          (status) => {
+            if (status === 'SUBSCRIBED' && mounted) {
+              fetchNotifications();
+            }
+          },
+          (error: Error) => {
+            console.error('Channel error:', error);
+            if (mounted) {
+              toast.error('Failed to connect to real-time updates');
+            }
+          }
+        );
+    };
+
+    setupChannel();
+
+    // Request notification permission on component mount
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(console.error);
+    }
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+    };
+  }, [fetchNotifications, maxItemsLimit, supabase]);
+
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      setIsMarkingRead(id);
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === id ? { ...n, read: true } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      toast.success('Marked as read');
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+      toast.error('Failed to mark as read');
+    } finally {
+      setIsMarkingRead(null);
+    }
+  }, [supabase]);
+
+  const markAllAsRead = useCallback(async () => {
+    try {
+      setIsMarkingAllRead(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      if (error) throw error;
+
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read: true }))
+      );
+      setUnreadCount(0);
+      toast.success('All notifications marked as read');
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+      toast.error('Failed to mark all as read');
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  }, [supabase]);
+
+  const deleteNotification = useCallback(async (id: string) => {
+    try {
+      setIsDeleting(id);
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      toast.success('Notification deleted');
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      toast.error('Failed to delete notification');
+    } finally {
+      setIsDeleting(null);
+    }
+  }, [supabase]);
+
+  const clearAll = useCallback(async () => {
+    try {
+      setIsClearing(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setNotifications([]);
+      setUnreadCount(0);
+      toast.success('All notifications cleared');
+    } catch (err) {
+      console.error('Error clearing notifications:', err);
+      toast.error('Failed to clear notifications');
+    } finally {
+      setIsClearing(false);
+    }
+  }, [supabase]);
+
+  const getNotificationIcon = useCallback((type: NotificationType) => {
+    const baseClass = 'h-5 w-5 flex-shrink-0';
+    
+    switch (type) {
+      case 'appointment':
+        return <Calendar className={`${baseClass} text-blue-500`} />;
+      case 'inventory':
+        return <Package className={`${baseClass} text-amber-500`} />;
+      case 'message':
+        return <MessageSquare className={`${baseClass} text-green-500`} />;
+      case 'user':
+        return <User className={`${baseClass} text-purple-500`} />;
+      case 'alert':
+        return <AlertCircle className={`${baseClass} text-red-500`} />;
+      case 'success':
+        return <CheckCircle className={`${baseClass} text-green-500`} />;
+      default:
+        return <Bell className={`${baseClass} text-gray-500`} />;
+    }
+  }, []);
+
+  const formatNotificationTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(parseISO(dateString), { addSuffix: true });
+    } catch (error) {
+      return 'Just now';
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if unread
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    
+    // Handle navigation based on notification type and data
+    if (notification.data) {
+      switch (notification.type) {
+        case 'appointment':
+          // Navigate to appointment details
+          window.location.href = `/appointments/${notification.data.appointment_id || ''}`;
+          break;
+        case 'inventory':
+          // Navigate to inventory management
+          window.location.href = '/admin/inventory';
+          break;
+        // Add more cases as needed
+      }
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full"
+        aria-label="Notifications"
+        aria-expanded={isOpen}
+      >
+        <Bell className="h-6 w-6" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-96 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              <div className="flex space-x-2">
+                {showMarkAllAsRead && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={markAllAsRead}
+                    disabled={unreadCount === 0 || isMarkingAllRead}
+                  >
+                    {isMarkingAllRead ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      'Mark all as read'
+                    )}
+                  </Button>
+                )}
+                {showClearAll && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAll}
+                    disabled={notifications.length === 0 || isClearing}
+                  >
+                    {isClearing ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      'Clear all'
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <ScrollArea className="max-h-96">
+            {isLoading ? (
+              <div className="p-4 text-center text-gray-500">
+                <Loader2 className="h-6 w-6 mx-auto animate-spin" />
+                <p className="mt-2">Loading notifications...</p>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                <p>No notifications yet</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {notifications.map((notification) => (
+                  <li
+                    key={notification.id}
+                    className={cn(
+                      'group relative p-4 hover:bg-gray-50 cursor-pointer transition-colors',
+                      !notification.read && 'bg-blue-50'
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 pt-0.5">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="ml-3 flex-1 min-w-0">
+                        <div className="flex justify-between">
+                          <p className="text-sm font-medium text-gray-900">
+                            {notification.title}
+                          </p>
+                          <div className="text-xs text-gray-500">
+                            {formatNotificationTime(notification.createdAt)}
+                          </div>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {notification.message}
+                        </p>
+                        
+                        {!notification.read && (
+                          <div className="mt-2 flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
+                              className="text-xs h-6 px-2"
+                              disabled={isMarkingRead === notification.id}
+                            >
+                              {isMarkingRead === notification.id ? (
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              ) : (
+                                <Check className="h-3 w-3 mr-1" />
+                              )}
+                              Mark as read
+                            </Button>
+                            {notification.type === 'appointment' && notification.data?.appointment_id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/appointments/${notification.data.appointment_id}`;
+                                }}
+                                className="text-xs h-6 px-2"
+                              >
+                                View details
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
+                        disabled={isDeleting === notification.id}
+                      >
+                        {isDeleting === notification.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">Delete notification</span>
+                      </button>
+                    </div>
+                    {!notification.read && (
+                      <div className="absolute top-4 right-4">
+                        <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </ScrollArea>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -5,18 +5,18 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-<<<<<<< HEAD
-    "start": "next start"
-=======
     "start": "next start",
     "lint": "eslint"
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-toast": "^1.2.15",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.2",
     "class-variance-authority": "^0.7.1",
@@ -35,19 +35,13 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-<<<<<<< HEAD
-=======
     "@eslint/eslintrc": "^3",
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-<<<<<<< HEAD
-=======
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
     "tailwindcss": "^4",
     "typescript": "^5"
   },

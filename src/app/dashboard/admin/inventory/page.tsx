@@ -98,11 +98,7 @@ export default function InventoryPage() {
           schema: 'public',
           table: 'vaccines',
         },
-<<<<<<< HEAD
         () => {
-=======
-        (payload) => {
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
           // Refresh the list when there are changes
           fetchVaccines();
         }

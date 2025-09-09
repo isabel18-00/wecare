@@ -1,16 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-<<<<<<< HEAD
 # System Files
 .DS_Store
 Thumbs.db
 desktop.ini
 *.lnk
+*.pem
 
 # Dependencies
-=======
-# dependencies
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 /node_modules
 /.pnp
 .pnp.*
@@ -20,7 +17,6 @@ desktop.ini
 !.yarn/releases
 !.yarn/versions
 
-<<<<<<< HEAD
 # Testing
 /coverage
 
@@ -38,29 +34,11 @@ desktop.ini
 .env.production.local
 
 # Debug logs
-=======
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-<<<<<<< HEAD
 # Vercel
 .vercel
 

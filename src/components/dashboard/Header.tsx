@@ -2,16 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-<<<<<<< HEAD
-import { BellIcon } from '@heroicons/react/24/outline';
-export default function Header() {
-=======
 import { Bars3Icon, BellIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
   const router = useRouter();
   const supabase = createClient();
 
@@ -22,10 +17,6 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-<<<<<<< HEAD
-      {/* Removed mobile menu button as it's not being used */}
-      <div className="flex-1"></div>
-=======
       <button
         type="button"
         className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
@@ -37,7 +28,6 @@ export default function Header() {
 
       {/* Separator */}
       <div className="h-6 w-px bg-gray-200 lg:hidden" aria-hidden="true" />
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <div className="flex-1"></div>

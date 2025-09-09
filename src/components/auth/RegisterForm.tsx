@@ -97,14 +97,9 @@ export default function RegisterForm() {
 
       // Redirect to confirmation page
       router.push('/auth/confirm-email');
-<<<<<<< HEAD
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'An error occurred during registration';
       setError(errorMessage);
-=======
-    } catch (error: any) {
-      setError(error.message || 'An error occurred during registration');
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
     } finally {
       setLoading(false);
     }

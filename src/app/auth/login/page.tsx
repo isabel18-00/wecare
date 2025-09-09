@@ -19,11 +19,7 @@ export default function Login() {
     };
     
     checkSession();
-<<<<<<< HEAD
   }, [router, supabase]);
-=======
-  }, [router]);
->>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
