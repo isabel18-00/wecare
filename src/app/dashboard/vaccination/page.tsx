@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Removed unused Card imports
 import { Button } from '@/components/ui/button';
 import { Download, Printer, Loader2 } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
@@ -32,7 +32,7 @@ export default function VaccinationCard() {
 
   // Memoize the fetch function to prevent unnecessary re-creations
   const fetchVaccinationRecords = useCallback(async () => {
-    if (!loading) setLoading(true);
+    setLoading(true);
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
@@ -79,10 +79,11 @@ export default function VaccinationCard() {
         ];
 
         setRecords(mockRecords);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching vaccination records:', err);
         if (isMounted.current) {
-          setError(err instanceof Error ? err.message : 'An error occurred');
+          const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+          setError(errorMessage);
           setLoading(false);
         }
       }
@@ -97,10 +98,17 @@ export default function VaccinationCard() {
   }, [fetchVaccinationRecords]);
 
   const handlePrint = useReactToPrint({
-    // @ts-ignore - The type definitions are incorrect for this version
+    pageStyle: `
+      @page { size: auto; margin: 10mm; }
+      @media print { 
+        body { -webkit-print-color-adjust: exact; } 
+      }
+    `,
+    // @ts-expect-error - The type definition is incorrect, but this works with the actual library
     content: () => componentRef.current,
     documentTitle: 'Vaccination-Card',
-    removeAfterPrint: true
+    removeAfterPrint: true,
+    onAfterPrint: () => {}
   });
 
   const handleDownload = () => {

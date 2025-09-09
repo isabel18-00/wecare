@@ -11,10 +11,10 @@ export default function ConfirmEmail() {
           Check your email
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          We've sent a confirmation link to your email address. Please check your inbox and click the link to verify your account.
+          We&apos;ve sent a confirmation link to your email address. Please check your inbox and click the link to verify your account.
         </p>
         <p className="mt-4 text-sm text-gray-600">
-          If you don't see the email, please check your spam folder or request a new confirmation email.
+          If you don&apos;t see the email, please check your spam folder or request a new confirmation email.
         </p>
       </div>
     </div>

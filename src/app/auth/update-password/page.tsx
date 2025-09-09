@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState('');
@@ -14,7 +14,6 @@ export default function UpdatePassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Check if the user has a valid session
@@ -71,8 +70,9 @@ export default function UpdatePassword() {
         router.push('/auth/login?message=Your password has been updated. Please sign in with your new password.');
       }, 2000);
       
-    } catch (error: any) {
-      setError(error.message || 'An error occurred while updating your password');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while updating your password';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

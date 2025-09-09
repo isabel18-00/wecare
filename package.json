@@ -18,11 +18,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "debug": "^4.3.4",
+    "is-arrayish": "^0.3.2",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-to-print": "^3.1.1",
+    "simple-swizzle": "^0.2.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7"
@@ -37,5 +40,9 @@
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "debug": "^4.3.4",
+    "is-arrayish": "^0.3.2"
   }
 }

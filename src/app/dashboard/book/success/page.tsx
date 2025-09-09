@@ -14,12 +14,12 @@ export default function BookingSuccess() {
         Thank you for booking your anti-rabies vaccination appointment with WeCare Clinic.
       </p>
       <p className="mt-2 text-gray-600">
-        We've sent a confirmation to your email with all the details.
+        We&apos;ve sent a confirmation to your email with all the details.
       </p>
       <div className="mt-10 flex items-center justify-center gap-x-6">
         <Link
           href="/dashboard"
-          className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           Back to Dashboard
         </Link>

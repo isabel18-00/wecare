@@ -129,9 +129,10 @@ export default function BookAppointmentPage() {
 
       // Redirect to success page or dashboard
       router.push('/dashboard?success=Appointment booked successfully');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error submitting form:', err);
-      setError(err.message || 'An error occurred while booking your appointment');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while booking your appointment';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -29,12 +29,23 @@ export default function AdminDashboard() {
     type: string;
     description: string;
     created_at: string;
-    [key: string]: any; // For any additional properties
+    [key: string]: string | number | boolean | null | undefined; // For additional properties
   }
 
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
   const supabase = createClient();
   const router = useRouter();
+
+  // Define the expected response types for Supabase queries
+  interface SupabaseError {
+    message: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  }
+
+  type SupabaseCountResponse = { count: number | null; error: SupabaseError | null; };
+  type SupabaseActivityResponse = { data: ActivityLog[] | null; error: SupabaseError | null; };
 
   // Check authentication and fetch data
   useEffect(() => {
@@ -90,7 +101,7 @@ export default function AdminDashboard() {
           { count: lowStockItems },
           { count: unreadMessages },
           { data: activityData },
-        ] = await Promise.all([
+        ] = await Promise.all<SupabaseCountResponse | SupabaseActivityResponse>([
           supabase.from('patients').select('*', { count: 'exact', head: true }),
           supabase
             .from('appointments')
@@ -172,7 +183,7 @@ export default function AdminDashboard() {
           href="/dashboard/admin/patients"
         />
         <StatCard
-          title="Today's Appointments"
+          title={"Today's Appointments"}
           value={stats.todayAppointments}
           icon={<Calendar className="h-5 w-5 text-white" />}
           color="bg-blue-600"
