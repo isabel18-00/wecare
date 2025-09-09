@@ -21,6 +21,15 @@ export function StatCard({
   trend,
   trendType = 'neutral',
 }: StatCardProps) {
+<<<<<<< HEAD
+=======
+  const trendColors = {
+    increase: 'text-green-600',
+    decrease: 'text-red-600',
+    neutral: 'text-gray-500',
+  };
+
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
   const trendIcons = {
     increase: '↑',
     decrease: '↓',

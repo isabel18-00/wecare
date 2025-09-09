@@ -5,7 +5,14 @@ import { Dialog, Transition } from '@headlessui/react';
 import {
   CalendarIcon,
   ChartBarIcon,
+<<<<<<< HEAD
   HomeIcon,
+=======
+  FolderIcon,
+  HomeIcon,
+  InboxIcon,
+  UsersIcon,
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
   XMarkIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,

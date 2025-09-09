@@ -36,6 +36,21 @@ export default function AdminDashboard() {
   const supabase = createClient();
   const router = useRouter();
 
+<<<<<<< HEAD
+=======
+  // Define the expected response types for Supabase queries
+  interface SupabaseError {
+    message: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  }
+
+  type SupabaseCountResponse = { count: number | null; error: SupabaseError | null; };
+  type SupabaseActivityResponse = { data: ActivityLog[] | null; error: SupabaseError | null; };
+
+  // Check authentication and fetch data
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
   useEffect(() => {
     const isMounted = true;
     
@@ -84,12 +99,21 @@ export default function AdminDashboard() {
         
         // Fetch all data in parallel
         const [
+<<<<<<< HEAD
           patientsResponse,
           appointmentsResponse,
           inventoryResponse,
           messagesResponse,
           activityResponse
         ] = await Promise.all([
+=======
+          { count: totalPatients },
+          { count: todayAppointments },
+          { count: lowStockItems },
+          { count: unreadMessages },
+          { data: activityData },
+        ] = await Promise.all<SupabaseCountResponse | SupabaseActivityResponse>([
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
           supabase.from('patients').select('*', { count: 'exact', head: true }),
           supabase
             .from('appointments')
@@ -111,12 +135,15 @@ export default function AdminDashboard() {
             .limit(5),
         ]);
 
+<<<<<<< HEAD
         const totalPatients = patientsResponse.count || 0;
         const todayAppointments = appointmentsResponse.count || 0;
         const lowStockItems = inventoryResponse.count || 0;
         const unreadMessages = messagesResponse.count || 0;
         const activityData = activityResponse.data || [];
 
+=======
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
         setStats({
           totalPatients: totalPatients || 0,
           todayAppointments: todayAppointments || 0,
@@ -163,7 +190,11 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
         <p className="text-gray-600 mt-1">
+<<<<<<< HEAD
           Welcome back! Here&apos;s what&apos;s happening with your clinic today.
+=======
+          Welcome back! Here's what's happening with your clinic today.
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
         </p>
       </div>
 

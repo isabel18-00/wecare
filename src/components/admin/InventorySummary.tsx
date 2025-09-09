@@ -47,14 +47,24 @@ export function InventorySummary() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'inventory' },
+<<<<<<< HEAD
         fetchInventory
+=======
+        () => {
+          fetchInventory();
+        }
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
+<<<<<<< HEAD
   }, [supabase]);
+=======
+  }, []);
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 
   if (loading) {
     return (

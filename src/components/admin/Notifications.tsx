@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 type NotificationType = 'appointment' | 'message' | 'user' | 'alert' | 'success';
 
+<<<<<<< HEAD
 interface NotificationData {
   [key: string]: string | number | boolean | null | undefined;
 }
@@ -23,6 +24,8 @@ interface DBNotification {
   user_id: string;
 }
 
+=======
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 interface Notification {
   id: string;
   type: NotificationType;
@@ -30,7 +33,11 @@ interface Notification {
   message: string;
   createdAt: string;
   read: boolean;
+<<<<<<< HEAD
   data: NotificationData;
+=======
+  data?: Record<string, any>;
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
 }
 
 export function Notifications() {
@@ -55,7 +62,11 @@ export function Notifications() {
         if (error) throw error;
 
         setNotifications(
+<<<<<<< HEAD
           (data as DBNotification[]).map((n) => ({
+=======
+          data.map((n: any) => ({
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
             id: n.id,
             type: n.type,
             title: n.title || getDefaultTitle(n.type),
@@ -86,14 +97,22 @@ export function Notifications() {
           filter: 'user_id=eq.' + supabase.auth.getUser()?.then(u => u.data.user?.id) 
         },
         (payload) => {
+<<<<<<< HEAD
           const newNotification: Notification = {
+=======
+          const newNotification = {
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
             id: payload.new.id,
             type: payload.new.type as NotificationType,
             title: payload.new.title || getDefaultTitle(payload.new.type),
             message: payload.new.message,
             createdAt: payload.new.created_at,
             read: false,
+<<<<<<< HEAD
             data: (payload.new.data as NotificationData) || {},
+=======
+            data: payload.new.data || {},
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
           };
           
           setNotifications(prev => [newNotification, ...prev.slice(0, 4)]);
@@ -187,7 +206,11 @@ export function Notifications() {
         <Bell className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
         <p className="mt-1 text-sm text-gray-500">
+<<<<<<< HEAD
           You&apos;ll see notifications here when you have them.
+=======
+          You'll see notifications here when you have them.
+>>>>>>> 2d258ccb6ca4b16e2a54f8e9ca5eb717fb5e1454
         </p>
       </div>
     );
