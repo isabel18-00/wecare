@@ -173,10 +173,22 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   handler satisfies RouteHandlerConfig<"/api/appointments">
 }
 
+// Validate ../../src/app/api/create-user-profile/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/create-user-profile/route.js")
+  handler satisfies RouteHandlerConfig<"/api/create-user-profile">
+}
+
 // Validate ../../src/app/api/messages/route.ts
 {
   const handler = {} as typeof import("../../src/app/api/messages/route.js")
   handler satisfies RouteHandlerConfig<"/api/messages">
+}
+
+// Validate ../../src/app/api/update-profile/route.ts
+{
+  const handler = {} as typeof import("../../src/app/api/update-profile/route.js")
+  handler satisfies RouteHandlerConfig<"/api/update-profile">
 }
 
 
